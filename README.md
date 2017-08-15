@@ -50,6 +50,5 @@ heroku ps:scale worker=1
 
 ### Reference
 https://www.fullstackpython.com/blog/build-first-slack-bot-python.html
-
 http://www.craftplustech.com/blog/?p=1434
 
