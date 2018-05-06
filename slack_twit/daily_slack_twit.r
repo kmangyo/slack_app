@@ -16,9 +16,11 @@ library(dplyr)
 library(reshape2)
 library(ggplot2)
 
+# read the file
 twit<-read.csv("tweets_kmangyo.csv")
 twit$date<-as.Date(twit$timestamp)
 
+# today
 today <- as.Date(Sys.time(),tz='Asia/Seoul')
 
 day <- list()
@@ -26,6 +28,7 @@ for(i in 1:8){
   day[i] <-as.Date(today - (365*i))
 }
 
+# select today twit
 memory <- list()
 for (i in 1:length(day)){
   memory[[i]]<- subset(twit, date==as.Date(day[[i]], origin='1970-01-01'))
@@ -33,6 +36,7 @@ for (i in 1:length(day)){
 
 slackr_setup(config_file='slack.slackr')
 
+# send the twit and date
 for(i in 1:length(memory)){
   slackr(as.character(memory[[i]]$date[1]),channel = '#memory')
   Sys.sleep(5)
@@ -42,17 +46,20 @@ for(i in 1:length(memory)){
 
 myword <- list()
 
+# except RTs
 for(i in 1:length(memory)){
   myword[[i]] <- subset(memory[[i]], str_detect(text, '^RT @')==FALSE)
 }
 
 gl_auth("XXXX.json")
 
+# using google API
 snt_result <- list()
 for(i in 1:length(memory)){
   snt_result[[i]] <- gl_nlp(as.character(myword[[i]]$text), language = "ko")
 }
 
+# getting sentiment score
 vplot <- list()
 for(i in 1:length(memory)){
  vplot[[i]] <- snt_result[[i]]$documentSentiment$score
@@ -79,8 +86,8 @@ y_date <- melt(y_date)
 vplot_df <- cbind(vplot_df, y_date)
 names(vplot_df)[3] <- 'date'
 
-# cnt twit
+# sent cnt twit
 ggslackr(ggplot(vplot_df, aes(x=date)) +geom_bar(stat="count"))
 
-# boxplot smt
+# send boxplot smt
 ggslackr(ggplot(vplot_df, aes(x=as.factor(substr(vplot_df$date,1,4)), y=value)) + geom_boxplot())
